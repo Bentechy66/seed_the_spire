@@ -1,20 +1,18 @@
-use rand::RngExt;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::mpsc;
+use crate::dotnet::random::DotNetRandom;
 use crate::events::event::EventOption;
 use crate::GameState;
 
 type HashCode = i32;
 
-pub fn generate_random_seed() -> String {
+pub fn generate_random_seed(rng: &mut DotNetRandom) -> String {
     const CHARS: &[u8] = b"ABCDEFGHIJKMNPQRSTUVWXYZ0123456789";
     const LEN: usize = 10;
-
-    let mut rng = rand::rng();
     let mut buf = [0u8; LEN];
 
     for b in buf.iter_mut() {
-        *b = CHARS[rng.random_range(0..CHARS.len())];
+        *b = CHARS[rng.next_range(0, CHARS.len() as i32) as usize];
     }
 
     unsafe { String::from_utf8_unchecked(buf.to_vec()) }
@@ -36,16 +34,23 @@ struct EventEntry {
     conditions: Vec<EventCondition>,
 }
 
-#[derive(Default)]
 pub struct SeedCracker {
     hash_conditions: Vec<HashCondition>,
     event_entries: Vec<EventEntry>,
+    game_state: GameState,
+
     pub attempts: AtomicI32,
 }
 
 impl SeedCracker {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn with_game_state(game_state: GameState) -> Self {
+        Self {
+            hash_conditions: vec![],
+            event_entries: vec![],
+            game_state,
+
+            attempts: AtomicI32::default()
+        }
     }
 
     /// Add a condition on the numeric hash of the seed.
@@ -105,7 +110,7 @@ impl SeedCracker {
             return false;
         }
 
-        let mut game_state = GameState::default();
+        let mut game_state = self.game_state.clone(); // todo: slooow
         game_state.numeric_seed = derived;
 
         for entry in &self.event_entries {
@@ -122,8 +127,9 @@ impl SeedCracker {
         let (tx, rx) = mpsc::channel();
 
         rayon::scope(|s| {
-            for _ in 0..rayon::current_num_threads() {
+            for i in 0..rayon::current_num_threads() {
                 let tx = tx.clone();
+                let mut rng = DotNetRandom::new(i as i32);
                 s.spawn(move |_| loop {
                     if tx.is_disconnected() {
                         break;
@@ -131,7 +137,7 @@ impl SeedCracker {
 
                     self.attempts.fetch_add(1, Ordering::Relaxed);
 
-                    let seed = generate_random_seed();
+                    let seed = generate_random_seed(&mut rng);
                     if self.test_seed(&seed) {
                         let _ = tx.send(seed);
                         break;

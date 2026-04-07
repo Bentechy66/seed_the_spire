@@ -53,7 +53,7 @@ impl<'a> Event<'a> for Neow<'a>{
     fn generate_initial_options(&mut self) -> Vec<EventOption> {
         let mut list = Self::curse_options();
 
-        if self.game_state.can_generate_bundles {
+        if self.game_state.unlock_state.can_generate_bundles() {
             list.push(Self::bundle_option());
         }
 

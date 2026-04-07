@@ -94,3 +94,9 @@ impl DotNetRandom {
         self.next_sample()
     }
 }
+
+impl Default for DotNetRandom {
+    fn default() -> Self {
+        Self::new(42)
+    }
+}
