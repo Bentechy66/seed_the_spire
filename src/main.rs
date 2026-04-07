@@ -1,14 +1,17 @@
 pub mod helpers;
 pub mod dotnet;
+pub mod slay_the_spire;
 
 fn main() {
-    // let mut rng = dotnet::random::DotNetRandom::new(42);
-    let mut hash_code: u64 = helpers::string_helper::get_deterministic_hash_code("TUGPT9R05U".to_string()) as u64;
-    hash_code += helpers::string_helper::get_deterministic_hash_code("NEOW".to_string()) as i64 as u64;
+    // TUGPT9R05U expects [BoomingConch, GoldenPeal, SilverCrucible]
+    // 7S78NB2BCP expects [NutritiousOyster, LostCoffer, ScrollBoxes]
+    // S3N2SQAK44 expects [ArcaneScroll, SmallCapsule, CursedPearl]
+    // JKC19NBHC0 expects [LavaRock, Pomander, PrecariousShears]
 
-    let mut rng = dotnet::random::DotNetRandom::new(hash_code as u32 as i32);
-
-    println!("{}", rng.next_range(0, 6));
-    println!("{}", rng.next_max(2) == 0);
-    println!("{}", rng.next_max(2) == 0);
+    println!("Generating Neow items for TUGPT9R05U");
+    let numeric_seed = helpers::string_helper::get_deterministic_hash_code("TUGPT9R05U".to_string());
+    let event_rng = slay_the_spire::rng::Rng::for_model(numeric_seed as u32, 1, "NEOW".to_string());
+    let mut neow = slay_the_spire::events::neow::Neow::new(event_rng);
+    let options = neow.generate_initial_options(true, 1);
+    println!("{:?}", options);
 }
