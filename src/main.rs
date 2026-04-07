@@ -19,13 +19,13 @@ fn main() {
     game_state.numeric_seed = numeric_seed;
 
     println!("Generating Neow items for TUGPT9R05U");
-    let mut neow = events::neow::Neow::new(&game_state);
+    let mut neow = events::Neow::new(&game_state);
     neow.calculate_vars();
     let options = neow.generate_initial_options();
     println!("{:?}", options);
 
     println!("Generating jungle maze values for TUGPT9R05U");
-    let mut jma = events::jungle_maze_adventure::JungleMazeAdventure::new(&game_state);
+    let mut jma = events::JungleMazeAdventure::new(&game_state);
     jma.calculate_vars();
     let options = jma.generate_initial_options();
 
