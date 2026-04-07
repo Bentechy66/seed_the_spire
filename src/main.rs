@@ -1,41 +1,44 @@
+#![feature(mpsc_is_disconnected)]
+
 pub mod helpers;
 pub mod dotnet;
 pub mod slay_the_spire;
 pub mod cracker;
 
-use core::num;
+use std::sync::atomic::Ordering;
 
 use slay_the_spire::events;
 use slay_the_spire::events::event::Event;
 use slay_the_spire::game_state::GameState;
 
+use crate::slay_the_spire::relics::Relic;
+use crate::slay_the_spire::events::event::EventOption;
+
 fn main() {
-    let cracker = cracker::SeedCracker::default()
-        .add_condition(|numeric_seed| { true });
+    let seed_cracker = cracker::SeedCracker::new()
+        // filter by raw hash properties
+        .add_condition(|hash| hash % 2 == 0)
 
-    dbg!(cracker.crack());
-}
+        // require that Neow will offer a specific relic
+        .add_event(|gs| {
+            let mut neow = events::Neow::new(gs);
+            neow.calculate_vars();
+            neow.generate_initial_options()
+        })
+        .with_any_option(|opt| matches!(opt, EventOption::RelicOption(Relic::ScrollBoxes)))
 
-fn main_() {
-    // TUGPT9R05U expects [BoomingConch, GoldenPeal, SilverCrucible]
-    // 7S78NB2BCP expects [NutritiousOyster, LostCoffer, ScrollBoxes]
-    // S3N2SQAK44 expects [ArcaneScroll, SmallCapsule, CursedPearl]
-    // JKC19NBHC0 expects [LavaRock, Pomander, PrecariousShears]
+        // require that JungleMazeAdventure would generate with more than 150 gold in solo missions
+        .add_event(|gs| {
+            let mut jma = events::JungleMazeAdventure::new(gs);
+            jma.calculate_vars();
+            jma.generate_initial_options()
+        })
+        .with_any_option(|opt| matches!(opt, EventOption::JungleMazeSoloMissionGainGold(g) if *g > 150));
 
-    let numeric_seed = helpers::string_helper::get_deterministic_hash_code(&"TUGPT9R05U".to_string());
-    let mut game_state = GameState::default();
-    game_state.numeric_seed = numeric_seed;
+        // let's go!
+    let result = seed_cracker.crack();
 
-    println!("Generating Neow items for TUGPT9R05U");
-    let mut neow = events::Neow::new(&game_state);
-    neow.calculate_vars();
-    let options = neow.generate_initial_options();
-    println!("{:?}", options);
+    let total_attempts = seed_cracker.attempts.load(Ordering::Relaxed);
 
-    println!("Generating jungle maze values for TUGPT9R05U");
-    let mut jma = events::JungleMazeAdventure::new(&game_state);
-    jma.calculate_vars();
-    let options = jma.generate_initial_options();
-
-    println!("{:?}", options);
+    println!("Found seed: {result} in {total_attempts} attempts.");
 }
