@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct DotNetRandom {
     inext: usize,
     inextp: usize,

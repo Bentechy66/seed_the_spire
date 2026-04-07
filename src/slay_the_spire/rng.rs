@@ -2,6 +2,7 @@ use crate::dotnet::random::DotNetRandom;
 use crate::helpers::string_helper;
 
 #[allow(unused)]
+#[derive(Debug)]
 pub struct Rng {
     _random: DotNetRandom,
 
@@ -28,8 +29,8 @@ impl Rng {
 
     pub fn for_model(seed: u32, net_id: u32, model_name: String) -> Self {
         let mut hash_code: u64 = seed as u64;
-        hash_code += net_id as u64; // player net id in singleplayer
-        hash_code += string_helper::get_deterministic_hash_code(model_name) as i64 as u64;
+        hash_code = hash_code.wrapping_add(net_id as u64); // player net id in singleplayer is 1
+        hash_code = hash_code.wrapping_add(string_helper::get_deterministic_hash_code(model_name) as i64 as u64);
 
         Self::with_seed(hash_code as u32)
     }
@@ -56,5 +57,9 @@ impl Rng {
         self.counter += 1;
 
         self._random.next_max(2) == 0
+    }
+
+    pub fn next_float(&mut self, min: f32, max: f32) -> f32 {
+        (self._random.next_double() * ((max - min) as f64) + (min as f64)) as f32
     }
 }
