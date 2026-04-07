@@ -2,7 +2,7 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
-use crate::slay_the_spire::{relic_grab_bag::RelicGrabBag, rng::Rng};
+use crate::slay_the_spire::{models::shared_relic_pool, relic_grab_bag::RelicGrabBag, rng::Rng};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_camel_case_types)]
@@ -44,7 +44,7 @@ impl UnlockState {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RunRngSet {
     pub up_front: Rng
 }
@@ -57,7 +57,7 @@ impl RunRngSet {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GameState {
     pub numeric_seed: i32,
     pub player_network_id: u32, // todo: move this into a more sensible players array
@@ -66,7 +66,8 @@ pub struct GameState {
 
     pub unlock_state: UnlockState,
     
-    pub shared_relic_grab_bag: RelicGrabBag
+    pub shared_relic_grab_bag: RelicGrabBag,
+    pub player_relic_grab_bag: RelicGrabBag
 }
 
 impl GameState {
@@ -83,11 +84,18 @@ impl GameState {
                 save_data: d
             },
             rng: RunRngSet::from_numeric_seed(numeric_seed as u32),
-            shared_relic_grab_bag: RelicGrabBag::default()
+            shared_relic_grab_bag: RelicGrabBag::default(),
+            player_relic_grab_bag: RelicGrabBag::default()
         }
     }
 
     pub fn initialize_new_run(&mut self) {
-        self.shared_relic_grab_bag.populate(self);
+        self
+            .shared_relic_grab_bag
+            .populate_with_items(shared_relic_pool::get_unlocked_relics(&self.unlock_state), &mut self.rng.up_front);
+
+        self
+            .player_relic_grab_bag
+            .populate(&self.unlock_state, &mut self.rng.up_front);
     }
 }
