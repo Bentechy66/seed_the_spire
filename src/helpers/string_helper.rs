@@ -1,4 +1,4 @@
-pub fn get_deterministic_hash_code(from_str: String) -> i32 {
+pub fn get_deterministic_hash_code(from_str: &str) -> i32 {
     let mut num: i32  = 352654597;
     let mut num2: i32 = num;
 

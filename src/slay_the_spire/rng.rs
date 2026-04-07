@@ -24,13 +24,13 @@ impl Rng {
     }
 
     pub fn with_seed_and_name(seed: u32, name: String) -> Self {
-        Self::with_seed(seed + (string_helper::get_deterministic_hash_code(name) as u32))
+        Self::with_seed(seed + (string_helper::get_deterministic_hash_code(&name) as u32))
     }
 
     pub fn for_model(seed: u32, net_id: u32, model_name: String) -> Self {
         let mut hash_code: u64 = seed as u64;
         hash_code = hash_code.wrapping_add(net_id as u64); // player net id in singleplayer is 1
-        hash_code = hash_code.wrapping_add(string_helper::get_deterministic_hash_code(model_name) as i64 as u64);
+        hash_code = hash_code.wrapping_add(string_helper::get_deterministic_hash_code(&model_name) as i64 as u64);
 
         Self::with_seed(hash_code as u32)
     }
