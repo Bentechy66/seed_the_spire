@@ -52,7 +52,7 @@ pub struct RunRngSet {
 impl RunRngSet {
     pub fn from_numeric_seed(seed: u32) -> Self {
         Self {
-            up_front: Rng::with_seed_and_name(seed, "UP_FRONT".to_string())
+            up_front: Rng::with_seed_and_name(seed, "up_front".to_string())
         }
     }
 }

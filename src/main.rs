@@ -26,7 +26,7 @@ fn main() {
     neow.calculate_vars();
     let opts = neow.generate_initial_options();
 
-    dbg!(opts);
+    dbg!(gs.player_relic_grab_bag);
 }
 
 #[allow(dead_code)]

@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 use crate::{helpers::list_helper, slay_the_spire::{game_state::UnlockState, models::{ironclad_relic_pool, shared_relic_pool}, relics::{Relic, RelicRarity}, rng::Rng}};
 
 #[derive(Default, Clone, Debug)]
 pub struct RelicGrabBag {
-    _deques: HashMap<RelicRarity, Vec<Relic>>
+    _deques: IndexMap<RelicRarity, Vec<Relic>>,
 }
 
 impl RelicGrabBag {
