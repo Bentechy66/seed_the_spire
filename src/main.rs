@@ -18,8 +18,7 @@ use crate::slay_the_spire::relics::Relic;
 use crate::slay_the_spire::events::event::EventOption;
 
 fn main() {
-    let mut gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string());
-    gs.numeric_seed = string_helper::get_deterministic_hash_code("TUGPT9R05U");
+    let gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), string_helper::get_deterministic_hash_code("TUGPT9R05U"));
 
     let mut neow = events::Neow::new(&gs);
     neow.calculate_vars();
@@ -30,7 +29,7 @@ fn main() {
 
 #[allow(dead_code)]
 fn main_() {
-    let seed_cracker = cracker::SeedCracker::with_game_state(GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string()))
+    let seed_cracker = cracker::SeedCracker::with_game_state(GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), 0))
         // filter by raw hash properties
         .add_condition(|hash| hash % 2 == 0)
 

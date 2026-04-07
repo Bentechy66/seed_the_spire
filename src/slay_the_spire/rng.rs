@@ -2,7 +2,7 @@ use crate::dotnet::random::DotNetRandom;
 use crate::helpers::string_helper;
 
 #[allow(unused)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rng {
     _random: DotNetRandom,
 

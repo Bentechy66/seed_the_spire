@@ -22,7 +22,7 @@ impl Neow<'_> {
     }
 
     fn toughness_option() -> EventOption { EventOption::RelicOption(Relic::NutritiousOyster) }
-    fn safety_option() -> EventOption { EventOption::RelicOption(Relic::StoneHumidifer) }
+    fn safety_option() -> EventOption { EventOption::RelicOption(Relic::StoneHumidifier) }
     fn cleric_option() -> EventOption { EventOption::RelicOption(Relic::MassiveScroll) }
     fn patience_option() -> EventOption { EventOption::RelicOption(Relic::LavaRock) }
     fn scavenger_option() -> EventOption { EventOption::RelicOption(Relic::SmallCapsule) }
