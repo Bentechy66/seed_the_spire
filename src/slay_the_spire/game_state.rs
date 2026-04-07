@@ -2,7 +2,7 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
-use crate::slay_the_spire::{models::shared_relic_pool, relic_grab_bag::RelicGrabBag, rng::Rng};
+use crate::slay_the_spire::{characters::Character, models::shared_relic_pool, relic_grab_bag::RelicGrabBag, rng::Rng};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_camel_case_types)]
@@ -63,6 +63,7 @@ pub struct GameState {
     pub player_network_id: u32, // todo: move this into a more sensible players array
     pub player_count: i32,
     pub rng: RunRngSet,
+    pub active_character: Character,
 
     pub unlock_state: UnlockState,
     
@@ -71,7 +72,7 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn from_save_file(path: String, numeric_seed: i32) -> Self {
+    pub fn from_save_file(path: String, numeric_seed: i32, as_character: Character) -> Self {
         let save_data_raw: String = fs::read_to_string(path).unwrap();
 
         let d: ParsedSaveData = serde_json::from_str(&save_data_raw).unwrap();
@@ -85,7 +86,8 @@ impl GameState {
             },
             rng: RunRngSet::from_numeric_seed(numeric_seed as u32),
             shared_relic_grab_bag: RelicGrabBag::default(),
-            player_relic_grab_bag: RelicGrabBag::default()
+            player_relic_grab_bag: RelicGrabBag::default(),
+            active_character: as_character
         }
     }
 
@@ -96,6 +98,6 @@ impl GameState {
 
         self
             .player_relic_grab_bag
-            .populate(&self.unlock_state, &mut self.rng.up_front);
+            .populate(&self.unlock_state, self.active_character, &mut self.rng.up_front);
     }
 }

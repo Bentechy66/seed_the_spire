@@ -13,12 +13,13 @@ use slay_the_spire::events::event::Event;
 use slay_the_spire::game_state::GameState;
 
 use crate::helpers::string_helper;
+use crate::slay_the_spire::characters::Character;
 use crate::slay_the_spire::game_state::ParsedSaveData;
 use crate::slay_the_spire::relics::Relic;
 use crate::slay_the_spire::events::event::EventOption;
 
 fn main() {
-    let mut gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), string_helper::get_deterministic_hash_code("XY9E8QBX6G"));
+    let mut gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), string_helper::get_deterministic_hash_code("E545V00WVS9"), Character::Silent);
 
     gs.initialize_new_run();
 
@@ -31,7 +32,7 @@ fn main() {
 
 #[allow(dead_code)]
 fn main_() {
-    let seed_cracker = cracker::SeedCracker::with_game_state(GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), 0))
+    let seed_cracker = cracker::SeedCracker::with_game_state(GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), 0, Character::Ironclad))
         // filter by raw hash properties
         .add_condition(|hash| hash % 2 == 0)
 

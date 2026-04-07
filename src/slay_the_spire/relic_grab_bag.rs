@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 
-use crate::{helpers::list_helper, slay_the_spire::{game_state::UnlockState, models::{ironclad_relic_pool, shared_relic_pool}, relics::{Relic, RelicRarity}, rng::Rng}};
+use crate::{helpers::list_helper, slay_the_spire::{characters::Character, game_state::UnlockState, models::{ironclad_relic_pool, shared_relic_pool, silent_relic_pool}, relics::{Relic, RelicRarity}, rng::Rng}};
 
 #[derive(Default, Clone, Debug)]
 pub struct RelicGrabBag {
@@ -30,9 +30,12 @@ impl RelicGrabBag {
         }
     }
 
-    pub fn populate(&mut self, unlock_state: &UnlockState, rng: &mut Rng) {
+    pub fn populate(&mut self, unlock_state: &UnlockState, character: Character, rng: &mut Rng) {
         let mut list = shared_relic_pool::get_unlocked_relics(unlock_state);
-        list.extend(ironclad_relic_pool::get_unlocked_relics(unlock_state));
+        match character {
+            Character::Ironclad => list.extend(ironclad_relic_pool::get_unlocked_relics(unlock_state)),
+            Character::Silent => list.extend(silent_relic_pool::get_unlocked_relics(unlock_state)),
+        }
         list.retain(|r| Self::permissible_rarities().iter().any(|p| *p == r.rarity()));
 
         for relic in list {
