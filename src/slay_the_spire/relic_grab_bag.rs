@@ -26,6 +26,7 @@ impl RelicGrabBag {
         }
 
         for rarity_list in self._deques.values_mut() {
+            dbg!(&rarity_list);
             list_helper::unstable_shuffle(rarity_list.as_mut_slice(), rng);
         }
     }

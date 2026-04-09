@@ -25,7 +25,8 @@ pub struct ParsedSaveData {
 
 #[derive(Debug, Clone)]
 pub struct UnlockState {
-    save_data: ParsedSaveData
+    save_data: ParsedSaveData,
+    all_epochs: bool,
 }
 
 impl UnlockState {
@@ -34,6 +35,7 @@ impl UnlockState {
     }
 
     pub fn is_epoch_revealed(&self, epoch_name: &str) -> bool {
+        self.all_epochs ||
         self
             .save_data
             .epochs
@@ -82,7 +84,24 @@ impl GameState {
             numeric_seed,
             player_network_id: 1,
             unlock_state: UnlockState {
-                save_data: d
+                save_data: d,
+                all_epochs: false,
+            },
+            rng: RunRngSet::from_numeric_seed(numeric_seed as u32),
+            shared_relic_grab_bag: RelicGrabBag::default(),
+            player_relic_grab_bag: RelicGrabBag::default(),
+            active_character: as_character
+        }
+    }
+
+    pub fn with_all_unlocks(numeric_seed: i32, as_character: Character) -> Self {
+        Self {
+            player_count: 1,
+            numeric_seed,
+            player_network_id: 1,
+            unlock_state: UnlockState {
+                save_data: ParsedSaveData{ epochs: vec![] },
+                all_epochs: true
             },
             rng: RunRngSet::from_numeric_seed(numeric_seed as u32),
             shared_relic_grab_bag: RelicGrabBag::default(),

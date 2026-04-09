@@ -19,15 +19,14 @@ use crate::slay_the_spire::relics::Relic;
 use crate::slay_the_spire::events::event::EventOption;
 
 fn main() {
-    let mut gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), string_helper::get_deterministic_hash_code("E545V00WVS9"), Character::Silent);
+    // let mut gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), string_helper::get_deterministic_hash_code("E545V00WVS9"), Character::Silent);
+    let mut gs = GameState::with_all_unlocks(string_helper::get_deterministic_hash_code("E545V00WVS9"), Character::Ironclad);
 
     gs.initialize_new_run();
 
     let mut neow = events::Neow::new(&gs);
     neow.calculate_vars();
     let opts = neow.generate_initial_options();
-
-    dbg!(gs.player_relic_grab_bag);
 }
 
 #[allow(dead_code)]

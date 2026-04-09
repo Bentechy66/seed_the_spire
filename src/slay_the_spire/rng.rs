@@ -6,8 +6,8 @@ use crate::helpers::string_helper;
 pub struct Rng {
     _random: DotNetRandom,
 
-    counter: i32,
-    seed: u32,
+    pub counter: i32,
+    pub seed: u32,
 }
 
 impl Rng {
@@ -24,7 +24,7 @@ impl Rng {
     }
 
     pub fn with_seed_and_name(seed: u32, name: String) -> Self {
-        Self::with_seed(seed + (string_helper::get_deterministic_hash_code(&name) as u32))
+        Self::with_seed(seed.wrapping_add(string_helper::get_deterministic_hash_code(&name) as u32))
     }
 
     pub fn for_model(seed: u32, net_id: u32, model_name: String) -> Self {
@@ -45,6 +45,12 @@ impl Rng {
         self.counter += 1;
 
         self._random.next_range(min, max)
+    }
+
+     pub fn next_int_max(&mut self, max: i32) -> i32 {
+        self.counter += 1;
+
+        self._random.next_max(max)
     }
 
     pub fn next_item<T: Copy>(&mut self, from_list: &[T]) -> T {

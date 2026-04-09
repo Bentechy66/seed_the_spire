@@ -7,6 +7,7 @@ pub fn unstable_shuffle<T: Copy>(list: &mut [T], rng: &mut Rng) {
         num -= 1;
 
         let num2 = rng.next_int(0, (num + 1) as i32);
+        // dbg!(num, num2);
         let index = num2;
         let index2 = num;
 
