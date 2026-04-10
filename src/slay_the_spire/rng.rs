@@ -70,4 +70,10 @@ impl Rng {
 
         (self._random.next_double() * ((max - min) as f64) + (min as f64)) as f32
     }
+
+    pub fn next_double(&mut self) -> f64 {
+        self.counter += 1;
+
+        self._random.next_double()
+    }
 }

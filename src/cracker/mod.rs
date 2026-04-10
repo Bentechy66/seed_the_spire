@@ -34,9 +34,16 @@ struct EventEntry {
     conditions: Vec<EventCondition>,
 }
 
+struct GameStateRequirement {
+    /// Builds the event options from a game state
+    #[allow(clippy::type_complexity)]
+    build: Box<dyn Fn(&GameState) -> bool + Send + Sync>
+}
+
 pub struct SeedCracker {
     hash_conditions: Vec<HashCondition>,
     event_entries: Vec<EventEntry>,
+    game_state_requirements: Vec<GameStateRequirement>,
     game_state: GameState,
 
     pub attempts: AtomicI32,
@@ -47,6 +54,7 @@ impl SeedCracker {
         Self {
             hash_conditions: vec![],
             event_entries: vec![],
+            game_state_requirements: vec![],
             game_state,
 
             attempts: AtomicI32::default()
@@ -68,6 +76,17 @@ impl SeedCracker {
         self.event_entries.push(EventEntry {
             build: Box::new(build),
             conditions: Vec::new(),
+        });
+        self
+    }
+
+    /// Yeah
+    pub fn add_game_state_requirement(
+        mut self,
+        build: impl Fn(&GameState) -> bool + Send + Sync + 'static,
+    ) -> Self {
+        self.game_state_requirements.push(GameStateRequirement {
+            build: Box::new(build)
         });
         self
     }
@@ -116,6 +135,13 @@ impl SeedCracker {
         for entry in &self.event_entries {
             let options = (entry.build)(&game_state);
             if !entry.conditions.iter().all(|c| c(&options)) {
+                return false;
+            }
+        }
+
+        for entry in &self.game_state_requirements {
+            let ret = (entry.build)(&game_state);
+            if !ret {
                 return false;
             }
         }

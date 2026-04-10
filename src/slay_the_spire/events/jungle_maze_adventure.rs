@@ -13,6 +13,10 @@ impl Event<'_> for JungleMazeAdventure {
     fn get_internal_name() -> String { "JUNGLE_MAZE_ADVENTURE".to_string() }
     fn is_shared() -> bool { true }
 
+    fn map_event_id() -> Option<&'static str> {
+        Some("JungleMazeAdventure")
+    }
+
     fn new(game_state: &GameState) -> Self {
         Self {
             rng: Self::get_rng(game_state.numeric_seed, game_state.player.network_id),

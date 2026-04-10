@@ -2,13 +2,27 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
-use crate::slay_the_spire::{characters::Character, models::shared_relic_pool, player::Player, relic_grab_bag::RelicGrabBag, rng::Rng};
+use crate::{
+    helpers::string_helper,
+    slay_the_spire::{
+        characters::Character,
+        models::{
+            acts::Act,
+            room_set::{self, DEFAULT_ACT_ORDER},
+            shared_relic_pool,
+        },
+        player::Player,
+        relic_grab_bag::RelicGrabBag,
+        rng::Rng,
+    },
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_camel_case_types)]
 pub enum EpochUnlockState {
     revealed,
-    not_obtained
+    not_obtained,
+    obtained
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -70,7 +84,8 @@ pub struct GameState {
     pub unlock_state: UnlockState,
     
     pub shared_relic_grab_bag: RelicGrabBag,
-    pub player_relic_grab_bag: RelicGrabBag
+    pub player_relic_grab_bag: RelicGrabBag,
+    pub event_room_order: Vec<(Act, Vec<&'static str>)>,
 }
 
 impl GameState {
@@ -90,6 +105,7 @@ impl GameState {
             rng: RunRngSet::from_numeric_seed(numeric_seed as u32),
             shared_relic_grab_bag: RelicGrabBag::default(),
             player_relic_grab_bag: RelicGrabBag::default(),
+            event_room_order: vec![],
             active_character: as_character
         }
     }
@@ -106,7 +122,23 @@ impl GameState {
             rng: RunRngSet::from_numeric_seed(numeric_seed as u32),
             shared_relic_grab_bag: RelicGrabBag::default(),
             player_relic_grab_bag: RelicGrabBag::default(),
+            event_room_order: vec![],
             active_character: as_character
+        }
+    }
+
+    pub fn new_run_preview(string_seed: &str, player_count: i32, unlock_state: UnlockState) -> Self {
+        let numeric_seed = string_helper::get_deterministic_hash_code(string_seed);
+        Self {
+            player_count,
+            numeric_seed,
+            player: Player::new(1, numeric_seed as u32),
+            unlock_state,
+            rng: RunRngSet::from_numeric_seed(numeric_seed as u32),
+            shared_relic_grab_bag: RelicGrabBag::default(),
+            player_relic_grab_bag: RelicGrabBag::default(),
+            event_room_order: vec![],
+            active_character: Character::Ironclad,
         }
     }
 
@@ -118,5 +150,33 @@ impl GameState {
         self
             .player_relic_grab_bag
             .populate(&self.unlock_state, self.active_character, &mut self.rng.up_front);
+
+        let acts = Act::three_act_order_for_numeric_seed(
+            self.numeric_seed as u32,
+            &self.unlock_state,
+            self.player_count > 1,
+            self.unlock_state.is_epoch_revealed("UNDERDOCKS_EPOCH"),
+        );
+        let room_sets = room_set::generate_run_room_sets_with_up_front(
+            &mut self.rng.up_front,
+            &self.unlock_state,
+            self.player_count > 1,
+            &acts,
+        );
+        self.event_room_order = room_sets
+            .into_iter()
+            .map(|(act, rooms)| (act, rooms.events))
+            .collect();
+    }
+
+    pub fn event_room_order_for_act(&self, act: Act) -> Option<&Vec<&'static str>> {
+        self.event_room_order
+            .iter()
+            .find(|(a, _)| *a == act)
+            .map(|(_, events)| events)
+    }
+
+    pub fn default_three_act_order() -> [Act; 3] {
+        DEFAULT_ACT_ORDER
     }
 }

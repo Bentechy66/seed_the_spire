@@ -118,19 +118,21 @@ pub fn generate_rooms(
     }
 
     let n_rooms = act.number_of_rooms(is_multiplayer);
+    let mut regular_grab_bag = GrabBag::new();
     for _ in act.number_of_weak_encounters()..n_rooms {
-        if !grab_bag.any() {
-            refill_grab_bag(&mut grab_bag, &regular_pool);
+        if !regular_grab_bag.any() {
+            refill_grab_bag(&mut regular_grab_bag, &regular_pool);
         }
-        add_without_repeating_tags(&mut normal_encounters, &mut grab_bag, rng);
+        add_without_repeating_tags(&mut normal_encounters, &mut regular_grab_bag, rng);
     }
 
     let mut elite_encounters = Vec::new();
+    let mut elite_grab_bag = GrabBag::new();
     for _ in 0..15 {
-        if !grab_bag.any() {
-            refill_grab_bag(&mut grab_bag, &elite_pool);
+        if !elite_grab_bag.any() {
+            refill_grab_bag(&mut elite_grab_bag, &elite_pool);
         }
-        add_without_repeating_tags(&mut elite_encounters, &mut grab_bag, rng);
+        add_without_repeating_tags(&mut elite_encounters, &mut elite_grab_bag, rng);
     }
 
     let boss = rng.next_item(&boss_pool);
@@ -158,12 +160,9 @@ pub fn assign_shared_ancient_subsets(rng: &mut Rng, unlock: &UnlockState, subseq
     list_helper::unstable_shuffle(pool.as_mut_slice(), rng);
     let mut out = Vec::with_capacity(subsequent_acts);
     for _ in 0..subsequent_acts {
-        if pool.is_empty() {
-            out.push(Vec::new());
-            continue;
-        }
         let count = rng.next_int(0, (pool.len() + 1) as i32) as usize;
-        let taken: Vec<Ancient> = pool.drain(..count).collect();
+        let take_count = count.min(pool.len());
+        let taken: Vec<Ancient> = pool.drain(..take_count).collect();
         out.push(taken);
     }
     out

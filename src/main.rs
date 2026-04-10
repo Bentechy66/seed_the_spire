@@ -15,6 +15,7 @@ use slay_the_spire::game_state::GameState;
 use crate::helpers::string_helper;
 use crate::slay_the_spire::characters::Character;
 use crate::slay_the_spire::game_state::ParsedSaveData;
+use crate::slay_the_spire::models::map_event_eligibility::{self, map_event_is_allowed};
 use crate::slay_the_spire::relics::Relic;
 use crate::slay_the_spire::events::event::EventOption;
 
@@ -32,6 +33,7 @@ fn main() {
     let rarity = &gs.player_relic_grab_bag.roll_rarity(&mut gs.player);
     let relic = gs.player_relic_grab_bag.pull_from_front(&mut gs.player, rarity);
     dbg!(rarity, gs.player_relic_grab_bag, relic);
+    dbg!(gs.event_room_order[0].1.iter().filter(|e| map_event_is_allowed(e, &map_event_eligibility::MapEventRunProbe::optimistic_first_act())).collect::<Vec<_>>());
 }
 
 #[allow(dead_code)]

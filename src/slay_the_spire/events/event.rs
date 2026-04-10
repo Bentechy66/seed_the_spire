@@ -1,4 +1,9 @@
-use crate::slay_the_spire::{game_state::GameState, relics::Relic, rng::Rng};
+use crate::slay_the_spire::{
+    game_state::GameState,
+    models::map_event_eligibility,
+    relics::Relic,
+    rng::Rng,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EventOption {
@@ -16,6 +21,18 @@ pub enum EventOption {
 pub trait Event<'a> {
     fn get_internal_name() -> String;
     fn is_shared() -> bool { false }
+
+    /// When this Rust event mirrors a rotating map event, its PascalCase id (e.g. `JungleMazeAdventure`).
+    fn map_event_id() -> Option<&'static str> {
+        None
+    }
+
+    /// Whether that map id could pass canonical `IsAllowed` as the first such event while still on act index 0.
+    fn could_possibly_be_first_map_event_in_run() -> bool {
+        Self::map_event_id()
+            .map(map_event_eligibility::could_possibly_be_first_map_event_in_run)
+            .unwrap_or(true)
+    }
 
     fn calculate_vars(&mut self) { }
 

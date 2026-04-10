@@ -203,4 +203,26 @@ impl Act {
         }
         acts
     }
+
+    pub fn three_act_order_for_numeric_seed(
+        numeric_seed: u32,
+        unlock: &UnlockState,
+        is_multiplayer: bool,
+        underdocks_discovered_on_account: bool,
+    ) -> [Act; 3] {
+        let mut acts = [Act::Overgrowth, Act::Hive, Act::Glory];
+        if !unlock.is_epoch_revealed("UNDERDOCKS_EPOCH") {
+            return acts;
+        }
+        let replace_first = if !is_multiplayer && !underdocks_discovered_on_account {
+            true
+        } else {
+            let mut r = Rng::with_seed(numeric_seed);
+            r.next_bool()
+        };
+        if replace_first {
+            acts[0] = Act::Underdocks;
+        }
+        acts
+    }
 }

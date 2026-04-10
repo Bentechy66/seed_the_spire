@@ -5,5 +5,6 @@ pub mod game_state;
 pub mod models;
 pub mod characters;
 pub mod relic_grab_bag;
+pub mod grab_bag;
 pub mod player;
 pub mod player_rng_set;
