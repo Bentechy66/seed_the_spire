@@ -15,11 +15,13 @@ use slay_the_spire::game_state::GameState;
 use crate::helpers::string_helper;
 use crate::slay_the_spire::characters::Character;
 use crate::slay_the_spire::game_state::ParsedSaveData;
+use crate::slay_the_spire::models::acts::Act;
+use crate::slay_the_spire::models::ancients::Ancient;
 use crate::slay_the_spire::models::map_event_eligibility::{self, map_event_is_allowed};
 use crate::slay_the_spire::relics::Relic;
 use crate::slay_the_spire::events::event::EventOption;
 
-fn main() {
+fn main_() {
     // let mut gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), string_helper::get_deterministic_hash_code("E545V00WVS9"), Character::Silent);
     let mut gs = GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), string_helper::get_deterministic_hash_code("R6MQQNHSRS"), Character::Ironclad);
 
@@ -37,12 +39,12 @@ fn main() {
 }
 
 #[allow(dead_code)]
-fn main_() {
+fn main() {
     let seed_cracker = cracker::SeedCracker::with_game_state(GameState::from_save_file("C:\\Users\\sendb\\AppData\\Roaming\\SlayTheSpire2\\steam\\76561198250957188\\profile1\\saves\\progress.save".to_string(), 0, Character::Ironclad))
         // filter by raw hash properties
-        .add_condition(|hash| hash % 2 == 0)
+        // .add_condition(|hash| hash % 2 == 0)
 
-        // require that Neow will offer a specific relic
+        // // require that Neow will offer a specific relic
         .add_event(|gs| {
             let mut neow = events::Neow::new(gs);
             neow.calculate_vars();
@@ -50,13 +52,8 @@ fn main_() {
         })
         .with_any_option(|opt| matches!(opt, EventOption::RelicOption(Relic::ScrollBoxes)))
 
-        // require that JungleMazeAdventure would generate with more than 150 gold in solo missions
-        .add_event(|gs| {
-            let mut jma = events::JungleMazeAdventure::new(gs);
-            jma.calculate_vars();
-            jma.generate_initial_options()
-        })
-        .with_any_option(|opt| matches!(opt, EventOption::JungleMazeSoloMissionGainGold(g) if *g > 150));
+        // .require_all_events_in_first_n_for_act(Act::Overgrowth, 1, &["JungleMazeAdventure"])
+        .require_run_includes_ancients(&[Ancient::Neow, Ancient::Orobas]);
 
         // let's go!
     let result = seed_cracker.crack();

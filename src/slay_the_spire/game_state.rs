@@ -8,6 +8,7 @@ use crate::{
         characters::Character,
         models::{
             acts::Act,
+            ancients::Ancient,
             room_set::{self, DEFAULT_ACT_ORDER},
             shared_relic_pool,
         },
@@ -86,6 +87,8 @@ pub struct GameState {
     pub shared_relic_grab_bag: RelicGrabBag,
     pub player_relic_grab_bag: RelicGrabBag,
     pub event_room_order: Vec<(Act, Vec<&'static str>)>,
+    /// Filled by [`GameState::initialize_new_run`]: ancients for each timeline act in order.
+    pub run_ancients: Vec<(Act, Ancient)>,
 }
 
 impl GameState {
@@ -106,6 +109,7 @@ impl GameState {
             shared_relic_grab_bag: RelicGrabBag::default(),
             player_relic_grab_bag: RelicGrabBag::default(),
             event_room_order: vec![],
+            run_ancients: vec![],
             active_character: as_character
         }
     }
@@ -123,6 +127,7 @@ impl GameState {
             shared_relic_grab_bag: RelicGrabBag::default(),
             player_relic_grab_bag: RelicGrabBag::default(),
             event_room_order: vec![],
+            run_ancients: vec![],
             active_character: as_character
         }
     }
@@ -138,8 +143,15 @@ impl GameState {
             shared_relic_grab_bag: RelicGrabBag::default(),
             player_relic_grab_bag: RelicGrabBag::default(),
             event_room_order: vec![],
+            run_ancients: vec![],
             active_character: Character::Ironclad,
         }
+    }
+
+    /// Resets RNG streams and per-player RNG so they match `numeric_seed` (e.g. after assigning a trial hash).
+    pub fn sync_rng_from_numeric_seed(&mut self) {
+        self.rng = RunRngSet::from_numeric_seed(self.numeric_seed as u32);
+        self.player = Player::new(self.player.network_id, self.numeric_seed as u32);
     }
 
     pub fn initialize_new_run(&mut self) {
@@ -163,6 +175,10 @@ impl GameState {
             self.player_count > 1,
             &acts,
         );
+        self.run_ancients = room_sets
+            .iter()
+            .map(|(act, rooms)| (*act, rooms.ancient))
+            .collect();
         self.event_room_order = room_sets
             .into_iter()
             .map(|(act, rooms)| (act, rooms.events))

@@ -1,8 +1,13 @@
+use std::collections::HashSet;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::mpsc;
+
 use crate::dotnet::random::DotNetRandom;
-use crate::events::event::EventOption;
-use crate::GameState;
+use crate::helpers::string_helper;
+use crate::slay_the_spire::events::event::EventOption;
+use crate::slay_the_spire::game_state::GameState;
+use crate::slay_the_spire::models::map_event_eligibility::{MapEventRunProbe, could_possibly_be_first_map_event_in_run};
+use crate::slay_the_spire::models::{acts::Act, ancients::Ancient};
 
 type HashCode = i32;
 
@@ -37,7 +42,7 @@ struct EventEntry {
 struct GameStateRequirement {
     /// Builds the event options from a game state
     #[allow(clippy::type_complexity)]
-    build: Box<dyn Fn(&GameState) -> bool + Send + Sync>
+    build: Box<dyn Fn(&GameState) -> bool + Send + Sync>,
 }
 
 pub struct SeedCracker {
@@ -57,7 +62,7 @@ impl SeedCracker {
             game_state_requirements: vec![],
             game_state,
 
-            attempts: AtomicI32::default()
+            attempts: AtomicI32::default(),
         }
     }
 
@@ -80,13 +85,12 @@ impl SeedCracker {
         self
     }
 
-    /// Yeah
     pub fn add_game_state_requirement(
         mut self,
         build: impl Fn(&GameState) -> bool + Send + Sync + 'static,
     ) -> Self {
         self.game_state_requirements.push(GameStateRequirement {
-            build: Box::new(build)
+            build: Box::new(build),
         });
         self
     }
@@ -121,16 +125,126 @@ impl SeedCracker {
         self.with_event_condition(move |opts| opts.iter().all(&predicate))
     }
 
+    /// Every id in `required` appears somewhere in the first `first_n` event slots for `act`
+    /// (after [`GameState::initialize_new_run`] for the trial seed).
+    pub fn require_all_events_in_first_n_for_act(
+        self,
+        act: Act,
+        first_n: usize,
+        required: &'static [&'static str],
+    ) -> Self {
+        self.add_game_state_requirement(move |gs| {
+            let mut g = gs.clone();
+            g.initialize_new_run();
+            let Some(events) = g.event_room_order_for_act(act) else {
+                return false;
+            };
+            let take = first_n.min(events.len());
+            // skip first item because Ancient consumes its slot
+            let prefix: HashSet<&str> = events.iter().skip(1).filter(|x| could_possibly_be_first_map_event_in_run(x)).take(take).copied().collect();
+            required.iter().all(|id| prefix.contains(*id))
+        })
+    }
+
+    /// At least one id in `candidates` appears in the first `first_n` slots for `act`.
+    pub fn require_any_event_in_first_n_for_act(
+        self,
+        act: Act,
+        first_n: usize,
+        candidates: &'static [&'static str],
+    ) -> Self {
+        self.add_game_state_requirement(move |gs| {
+            let mut g = gs.clone();
+            g.initialize_new_run();
+            let Some(events) = g.event_room_order_for_act(act) else {
+                return false;
+            };
+            let take = first_n.min(events.len());
+            let prefix: HashSet<&str> = events.iter().take(take).copied().collect();
+            candidates.iter().any(|id| prefix.contains(*id))
+        })
+    }
+
+    /// The event queue for `act` begins with `prefix` (same order, same length).
+    pub fn require_act_events_start_with(self, act: Act, prefix: &'static [&'static str]) -> Self {
+        self.add_game_state_requirement(move |gs| {
+            let mut g = gs.clone();
+            g.initialize_new_run();
+            let Some(events) = g.event_room_order_for_act(act) else {
+                return false;
+            };
+            if events.len() < prefix.len() {
+                return false;
+            }
+            prefix
+                .iter()
+                .zip(events.iter())
+                .all(|(want, got)| *want == *got)
+        })
+    }
+
+    /// Ancient at timeline position `timeline_index` (0 = first act of the run, 1 = second, 2 = third).
+    pub fn require_ancient_at_timeline_index(
+        self,
+        timeline_index: usize,
+        ancient: Ancient,
+    ) -> Self {
+        self.add_game_state_requirement(move |gs| {
+            let mut g = gs.clone();
+            g.initialize_new_run();
+            g.run_ancients
+                .get(timeline_index)
+                .is_some_and(|(_, a)| *a == ancient)
+        })
+    }
+
+    /// The ancient rolled for the given [`Act`] (whichever timeline slot uses that act) must match.
+    pub fn require_ancient_for_act(self, act: Act, ancient: Ancient) -> Self {
+        self.add_game_state_requirement(move |gs| {
+            let mut g = gs.clone();
+            g.initialize_new_run();
+            g.run_ancients
+                .iter()
+                .any(|(a, an)| *a == act && *an == ancient)
+        })
+    }
+
+    /// Exact sequence of three ancients for the three acts (timeline order).
+    pub fn require_run_ancients_exact(self, expected: &'static [Ancient; 3]) -> Self {
+        self.add_game_state_requirement(move |gs| {
+            let mut g = gs.clone();
+            g.initialize_new_run();
+            if g.run_ancients.len() != 3 {
+                return false;
+            }
+            g.run_ancients
+                .iter()
+                .zip(expected.iter())
+                .all(|((_, a), want)| *a == *want)
+        })
+    }
+
+    /// Run includes every listed ancient (any timeline slot; order ignored).
+    pub fn require_run_includes_ancients(self, must_include: &'static [Ancient]) -> Self {
+        self.add_game_state_requirement(move |gs| {
+            let mut g = gs.clone();
+            g.initialize_new_run();
+            let have: HashSet<Ancient> = g.run_ancients.iter().map(|(_, a)| *a).collect();
+            must_include.iter().all(|a| have.contains(a))
+        })
+    }
+
     #[allow(clippy::field_reassign_with_default)]
     fn test_seed(&self, seed: &str) -> bool {
-        let derived = crate::helpers::string_helper::get_deterministic_hash_code(seed);
+        let derived = string_helper::get_deterministic_hash_code(seed);
 
         if !self.hash_conditions.iter().all(|c| c(derived)) {
             return false;
         }
 
-        let mut game_state = self.game_state.clone(); // todo: slooow
+        let mut game_state = self.game_state.clone();
         game_state.numeric_seed = derived;
+        game_state.sync_rng_from_numeric_seed();
 
         for entry in &self.event_entries {
             let options = (entry.build)(&game_state);

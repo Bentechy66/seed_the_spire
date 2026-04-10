@@ -1,6 +1,6 @@
 use crate::slay_the_spire::{game_state::UnlockState, models::acts::Act};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Ancient {
     Nonupeipe,
     Tanx,
