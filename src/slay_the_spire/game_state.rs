@@ -2,7 +2,7 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
-use crate::slay_the_spire::{characters::Character, models::shared_relic_pool, relic_grab_bag::RelicGrabBag, rng::Rng};
+use crate::slay_the_spire::{characters::Character, models::shared_relic_pool, player::Player, relic_grab_bag::RelicGrabBag, rng::Rng};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_camel_case_types)]
@@ -62,7 +62,7 @@ impl RunRngSet {
 #[derive(Clone, Debug)]
 pub struct GameState {
     pub numeric_seed: i32,
-    pub player_network_id: u32, // todo: move this into a more sensible players array
+    pub player: Player, // todo: move this into a more sensible players array
     pub player_count: i32,
     pub rng: RunRngSet,
     pub active_character: Character,
@@ -82,7 +82,7 @@ impl GameState {
         Self {
             player_count: 1,
             numeric_seed,
-            player_network_id: 1,
+            player: Player::new(1, numeric_seed as u32),
             unlock_state: UnlockState {
                 save_data: d,
                 all_epochs: false,
@@ -98,7 +98,7 @@ impl GameState {
         Self {
             player_count: 1,
             numeric_seed,
-            player_network_id: 1,
+            player: Player::new(1, numeric_seed as u32),
             unlock_state: UnlockState {
                 save_data: ParsedSaveData{ epochs: vec![] },
                 all_epochs: true

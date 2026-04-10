@@ -66,6 +66,8 @@ impl Rng {
     }
 
     pub fn next_float(&mut self, min: f32, max: f32) -> f32 {
+        self.counter += 1;
+
         (self._random.next_double() * ((max - min) as f64) + (min as f64)) as f32
     }
 }

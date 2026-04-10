@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 
-use crate::{helpers::list_helper, slay_the_spire::{characters::Character, game_state::UnlockState, models::{ironclad_relic_pool, shared_relic_pool, silent_relic_pool}, relics::{Relic, RelicRarity}, rng::Rng}};
+use crate::{helpers::list_helper, slay_the_spire::{characters::Character, game_state::UnlockState, models::{ironclad_relic_pool, shared_relic_pool, silent_relic_pool}, player::Player, relics::{Relic, RelicRarity}, rng::Rng}};
 
 #[derive(Default, Clone, Debug)]
 pub struct RelicGrabBag {
@@ -26,7 +26,6 @@ impl RelicGrabBag {
         }
 
         for rarity_list in self._deques.values_mut() {
-            dbg!(&rarity_list);
             list_helper::unstable_shuffle(rarity_list.as_mut_slice(), rng);
         }
     }
@@ -48,6 +47,27 @@ impl RelicGrabBag {
 
         for rarity_list in self._deques.values_mut() {
             list_helper::unstable_shuffle(rarity_list.as_mut_slice(), rng);
+        }
+    }
+
+    pub fn pull_from_front(&mut self, plr: &mut Player, rarity: &RelicRarity) -> Relic {
+        let available_deque = self._deques.get_mut(rarity).unwrap();
+        let result = available_deque[0];
+        available_deque.remove(0);
+        result
+    }
+
+    pub fn roll_rarity(&mut self, plr: &mut Player) -> RelicRarity {
+        let num = plr.player_rng.rewards.next_float(0.0, 1.0);
+
+        if num < 0.5 {
+            RelicRarity::Common
+        } else {
+            if num > 0.83 {
+                RelicRarity::Rare
+            } else {
+                RelicRarity::Uncommon
+            }
         }
     }
 }

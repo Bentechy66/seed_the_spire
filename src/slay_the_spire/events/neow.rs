@@ -45,7 +45,7 @@ impl<'a> Event<'a> for Neow<'a>{
 
     fn new(game_state: &'a GameState) -> Self {
         Self {
-            rng: Self::get_rng(game_state.numeric_seed, game_state.player_network_id),
+            rng: Self::get_rng(game_state.numeric_seed, game_state.player.network_id),
             game_state
         }
     }
